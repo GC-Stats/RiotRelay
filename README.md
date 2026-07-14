@@ -35,6 +35,12 @@ All endpoints (except `/health`) require an `Authorization` header matching the 
 
 `region` must be one of: `ap`, `br`, `esports`, `eu`, `kr`, `latam`, `na`.
 
+## ⚠️ Usage
+
+This service is used in an internal environment only. Publicly exposing it might go against Riot's Developer Policies.
+
+From our research, it's not explicitly forbidden, but it falls in a gray zone (the closest applicable rule being "one product per key" in Riot's General Policies: https://developer.riotgames.com/policies/general). For that reason, this service stays private and internal to GC-Stats.
+
 ## ⚙️ Installation
 
 ### Option 1: Docker - Recommended
