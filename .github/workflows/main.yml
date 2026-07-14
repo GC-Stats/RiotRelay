@@ -1,0 +1,43 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run-checks:
+    uses: ./.github/workflows/checks.yml
+    permissions:
+      contents: read
+      checks: write
+      issues: write
+
+  deploy-preprod:
+    needs: [run-checks]
+    if: success() && github.event_name == 'push'
+    uses: ./.github/workflows/deploy-common.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      environment: preprod
+    secrets: inherit
+
+  deploy-prod:
+    needs: [run-checks]
+    if: success() && github.event_name == 'release'
+    uses: ./.github/workflows/deploy-common.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      environment: prod
+    secrets: inherit

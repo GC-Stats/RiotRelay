@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+vendor/
+
+# Secrets
+.env
+.env*
+!.env.example

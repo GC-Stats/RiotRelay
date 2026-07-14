@@ -1,0 +1,14 @@
+.idea/
+*.iml
+*.iws
+*.ipr
+
+.vscode/
+*.code-workspace
+.history/
+
+.env*
+.env.local
+!.env.example
+
+target/
