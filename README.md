@@ -4,6 +4,10 @@
 A simple micro-service used to cache Riot Match API Response
 Because Riot is keeping matchs for only 3 months (Except for the esports clients), we're storing the matches in our databases, to be able to fetch the entire match again later 
 
+> [!CAUTION]
+> This project isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
+
+
 ---
 
 |                                                                        Build Status                                                                         |                       Latest Version                                                    |
