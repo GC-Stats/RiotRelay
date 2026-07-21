@@ -301,6 +301,21 @@ async fn renew_match(
         return invalid_id_response();
     }
 
+    let existed: bool = match sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM matches WHERE region = ? AND match_id = ?",
+    )
+    .bind(&region)
+    .bind(&id)
+    .fetch_one(&state.db)
+    .await
+    {
+        Ok(count) => count > 0,
+        Err(e) => {
+            eprintln!("db error reading cache for {region}/{id}: {e}");
+            return db_error_response();
+        }
+    };
+
     let (mut resp, forwarded) = match fetch_from_riot(&state, &region, &id).await {
         RiotFetch::Ok(body) => {
             store_match(&state.db, &region, &id, &body).await;
@@ -312,8 +327,10 @@ async fn renew_match(
         RiotFetch::Unreachable(err) => (unreachable_response("RENEW-FAILED", &err), None),
     };
 
-    resp.headers_mut()
-        .insert("X-Cache-Preserved", HeaderValue::from_static("true"));
+    resp.headers_mut().insert(
+        "X-Cache-Preserved",
+        HeaderValue::from_static(if existed { "true" } else { "false" }),
+    );
     if let Some(headers) = forwarded {
         resp.headers_mut().extend(headers);
     }
