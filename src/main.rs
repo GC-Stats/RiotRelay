@@ -13,13 +13,12 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::{
-    Router,
+    Json, Router,
     extract::{Path, Request, State},
     http::{HeaderMap, HeaderName, HeaderValue, StatusCode, header},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post},
-    Json
 };
 use serde_json::json;
 use sqlx::mysql::{MySqlPool, MySqlPoolOptions};
@@ -100,9 +99,10 @@ async fn health(State(state): State<Arc<AppState>>) -> Response {
 
     match sqlx::query("SELECT 1").execute(&state.db).await {
         Ok(_) => (Json(json!({
-        "status": "ok",
-        "version": version
-    }))).into_response(),
+            "status": "ok",
+            "version": version
+        })))
+        .into_response(),
         Err(_) => (StatusCode::SERVICE_UNAVAILABLE, "db unavailable").into_response(),
     }
 }
