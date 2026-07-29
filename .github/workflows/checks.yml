@@ -12,11 +12,6 @@ concurrency:
   group: checks-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  checks: write
-  issues: write
-
 jobs:
   test:
     runs-on: ubuntu-latest
