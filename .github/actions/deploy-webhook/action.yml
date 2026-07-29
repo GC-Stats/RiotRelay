@@ -37,7 +37,7 @@ runs:
       run: |
         set -euo pipefail
 
-        PAYLOAD=$(printf '{"ref":"refs/heads/main","service":"%s","tag":"%s"}' "website" "$IMAGE_TAG")
+        PAYLOAD=$(printf '{"ref":"refs/heads/main","service":"%s","tag":"%s"}' "riotrelay" "$IMAGE_TAG")
         SIG=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$SECRET" | cut -d' ' -f2)
 
         echo "::group::Deploying ${VERSION} to ${SERVER}"
