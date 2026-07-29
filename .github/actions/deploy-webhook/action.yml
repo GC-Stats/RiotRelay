@@ -1,0 +1,70 @@
+name: Deploy via webhook
+description: Triggers the deploy webhook on a given server and optionally verifies the post-deploy health check response
+
+inputs:
+  server:
+    required: true
+    description: Server identifier (e.g. gcs-eu-server-01), used to build the deploy hostname
+  hook-id:
+    required: true
+    description: Webhook hook ID (e.g. gcs-website)
+  secret:
+    required: true
+    description: HMAC secret for the webhook signature
+  image-tag:
+    required: true
+    description: Docker image tag to pull on the server (latest for prod, preprod for preprod)
+  version:
+    required: true
+    description: Expected version, verified against the health check returned by the deploy script
+  verify-health:
+    required: false
+    default: 'true'
+    description: When true, fail unless the webhook response reports status=ok and the expected version
+
+runs:
+  using: composite
+  steps:
+    - name: Call deploy webhook
+      shell: bash
+      env:
+        SERVER: ${{ inputs.server }}
+        HOOK_ID: ${{ inputs.hook-id }}
+        SECRET: ${{ inputs.secret }}
+        IMAGE_TAG: ${{ inputs.image-tag }}
+        VERSION: ${{ inputs.version }}
+        VERIFY_HEALTH: ${{ inputs.verify-health }}
+      run: |
+        set -euo pipefail
+
+        PAYLOAD=$(printf '{"ref":"refs/heads/main","service":"%s","tag":"%s"}' "website" "$IMAGE_TAG")
+        SIG=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$SECRET" | cut -d' ' -f2)
+
+        echo "::group::Deploying ${VERSION} to ${SERVER}"
+
+        HTTP_CODE=$(curl -s -o /tmp/deploy-response.json -w '%{http_code}' -X POST \
+          --connect-timeout 10 --max-time 600 \
+          "https://deploy.${SERVER}.gc-stats.app/hooks/${HOOK_ID}" \
+          -H "Content-Type: application/json" \
+          -H "X-Hub-Signature-256: sha256=${SIG}" \
+          -d "$PAYLOAD")
+
+        cat /tmp/deploy-response.json
+        echo "::endgroup::"
+
+        if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+          echo "❌ Deploy webhook on ${SERVER} returned HTTP ${HTTP_CODE}"
+          exit 1
+        fi
+
+        if [ "$VERIFY_HEALTH" = "true" ]; then
+          STATUS=$(jq -r '.status // empty' /tmp/deploy-response.json)
+          REMOTE_VERSION=$(jq -r '.version // empty' /tmp/deploy-response.json)
+
+          if [ "$STATUS" != "ok" ]; then
+            echo "❌ Health check failed on ${SERVER}: status=${STATUS} version=${REMOTE_VERSION} (expected ${VERSION})"
+            exit 1
+          fi
+
+          echo "✅ ${SERVER} healthy at version ${REMOTE_VERSION}"
+        fi

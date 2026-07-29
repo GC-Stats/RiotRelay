@@ -25,6 +25,9 @@ RUN useradd -ms /bin/bash appuser
 
 WORKDIR /app
 
+ARG RELEASE_VERSION=dev
+ENV APP_VERSION=$RELEASE_VERSION
+
 COPY --from=builder /app/target/release/riot_relay /usr/local/bin/riotrelay
 
 USER appuser

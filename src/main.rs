@@ -19,6 +19,7 @@ use axum::{
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post},
+    Json
 };
 use serde_json::json;
 use sqlx::mysql::{MySqlPool, MySqlPoolOptions};
@@ -95,8 +96,13 @@ async fn main() {
 /// so orchestrators can probe it, and it fails when the cache DB is down so a
 /// database outage is visible rather than silently masked as a cache miss.
 async fn health(State(state): State<Arc<AppState>>) -> Response {
+    let version = std::env::var("APP_VERSION").unwrap_or_else(|_| "dev".to_string());
+
     match sqlx::query("SELECT 1").execute(&state.db).await {
-        Ok(_) => (StatusCode::OK, "ok").into_response(),
+        Ok(_) => (Json(json!({
+        "status": "ok",
+        "version": version
+    }))).into_response(),
         Err(_) => (StatusCode::SERVICE_UNAVAILABLE, "db unavailable").into_response(),
     }
 }
