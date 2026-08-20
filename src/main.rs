@@ -543,6 +543,7 @@ fn compute_merged_id(segments: &[MergeSegment]) -> String {
     format!("{MERGED_ID_PREFIX}{}", &full[4..])
 }
 
+#[allow(clippy::result_large_err)]
 async fn fetch_cached_body(
     db: &MySqlPool,
     region: &str,
@@ -563,6 +564,7 @@ async fn fetch_cached_body(
 /// reflects the freshest data available; only falls back to our cache if
 /// Riot can't answer (e.g. the source match has since expired on Riot's
 /// side). Parses the resulting body as JSON.
+#[allow(clippy::result_large_err)]
 async fn fetch_match_for_merge(
     state: &AppState,
     region: &str,
