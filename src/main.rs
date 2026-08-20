@@ -31,6 +31,11 @@ use subtle::ConstantTimeEq;
 /// re-fetched or renewed from the Riot API.
 const MERGED_ID_PREFIX: &str = "GCS-";
 
+/// Upper bound on how many source matches a single `/merge` request may
+/// combine, so one authenticated call can't fan out into an unbounded burst
+/// of Riot API requests.
+const MAX_MERGE_SEGMENTS: usize = 5;
+
 /// Valorant match-v1 routing regions.
 const ALLOWED_REGIONS: &[&str] = &["ap", "br", "esports", "eu", "kr", "latam", "na"];
 
@@ -411,9 +416,25 @@ async fn merge_match(
     // cache only if Riot can't be reached), so a merge is redone rather than
     // served stale just because its deterministic ID collides with a
     // previous run of the same request.
-    let mut sources = Vec::with_capacity(segments.len());
+    //
+    // Fetched concurrently (bounded by MAX_MERGE_SEGMENTS) since each
+    // segment's source match is independent; tasks are awaited in the
+    // original segment order so merge_round_data's first/last-segment
+    // handling stays correct regardless of fetch completion order.
+    let mut tasks = Vec::with_capacity(segments.len());
     for seg in segments {
-        match fetch_match_for_merge(&state, &region, &seg.match_id).await {
+        let state = state.clone();
+        let region = region.clone();
+        tasks.push(tokio::spawn(async move {
+            let value = fetch_match_for_merge(&state, &region, &seg.match_id).await;
+            (seg, value)
+        }));
+    }
+
+    let mut sources = Vec::with_capacity(tasks.len());
+    for task in tasks {
+        let (seg, value) = task.await.expect("merge fetch task panicked");
+        match value {
             Ok(value) => sources.push((seg, value)),
             Err(resp) => return resp,
         }
@@ -450,6 +471,11 @@ fn parse_merge_segments(body: &serde_json::Value) -> Result<Vec<MergeSegment>, R
         return Err(bad(
             "at least 2 segments are required to merge matches".to_string()
         ));
+    }
+    if raw.len() > MAX_MERGE_SEGMENTS {
+        return Err(bad(format!(
+            "at most {MAX_MERGE_SEGMENTS} segments are allowed per merge"
+        )));
     }
 
     let mut segments = Vec::with_capacity(raw.len());
@@ -737,54 +763,53 @@ fn merge_round_data(
         }
     }
 
-    let empty: Vec<serde_json::Value> = Vec::new();
-    let last_players = last_value
-        .get("players")
-        .and_then(|v| v.as_array())
-        .unwrap_or(&empty);
-    let first_players = first_value
-        .get("players")
-        .and_then(|v| v.as_array())
-        .unwrap_or(&empty);
-
+    // Walk segments last-to-first so a player's most recent snapshot wins on
+    // conflict, while still including players who only ever appear in a
+    // middle segment (e.g. a 3+ segment merge where someone sits out the
+    // final part of the match).
     let mut merged_players: Vec<serde_json::Value> = Vec::new();
     let mut seen_subjects: HashSet<String> = HashSet::new();
 
-    for p in last_players.iter().chain(first_players.iter()) {
-        let Some(subject) = p.get("puuid").and_then(|v| v.as_str()).map(str::to_string) else {
+    for (_, value) in sources.iter().rev() {
+        let Some(players) = value.get("players").and_then(|v| v.as_array()) else {
             continue;
         };
-        if !seen_subjects.insert(subject.clone()) {
-            continue;
-        }
+        for p in players {
+            let Some(subject) = p.get("puuid").and_then(|v| v.as_str()).map(str::to_string) else {
+                continue;
+            };
+            if !seen_subjects.insert(subject.clone()) {
+                continue;
+            }
 
-        let mut player = p.clone();
-        if let Some(stats) = player.get_mut("stats").and_then(|v| v.as_object_mut()) {
-            stats.insert(
-                "score".to_string(),
-                json!(score.get(&subject).copied().unwrap_or(0)),
-            );
-            stats.insert(
-                "kills".to_string(),
-                json!(kills.get(&subject).copied().unwrap_or(0)),
-            );
-            stats.insert(
-                "deaths".to_string(),
-                json!(deaths.get(&subject).copied().unwrap_or(0)),
-            );
-            stats.insert(
-                "assists".to_string(),
-                json!(assists.get(&subject).copied().unwrap_or(0)),
-            );
-            stats.insert("roundsPlayed".to_string(), json!(rounds_played));
-            if let Some(pt) = playtime.get(&subject) {
-                stats.insert("playtimeMillis".to_string(), json!(pt));
+            let mut player = p.clone();
+            if let Some(stats) = player.get_mut("stats").and_then(|v| v.as_object_mut()) {
+                stats.insert(
+                    "score".to_string(),
+                    json!(score.get(&subject).copied().unwrap_or(0)),
+                );
+                stats.insert(
+                    "kills".to_string(),
+                    json!(kills.get(&subject).copied().unwrap_or(0)),
+                );
+                stats.insert(
+                    "deaths".to_string(),
+                    json!(deaths.get(&subject).copied().unwrap_or(0)),
+                );
+                stats.insert(
+                    "assists".to_string(),
+                    json!(assists.get(&subject).copied().unwrap_or(0)),
+                );
+                stats.insert("roundsPlayed".to_string(), json!(rounds_played));
+                if let Some(pt) = playtime.get(&subject) {
+                    stats.insert("playtimeMillis".to_string(), json!(pt));
+                }
+                if let Some(casts) = ability_casts.get(&subject) {
+                    stats.insert("abilityCasts".to_string(), json!(casts));
+                }
             }
-            if let Some(casts) = ability_casts.get(&subject) {
-                stats.insert("abilityCasts".to_string(), json!(casts));
-            }
+            merged_players.push(player);
         }
-        merged_players.push(player);
     }
 
     // teams: roundsPlayed/roundsWon recomputed from the merged rounds;
