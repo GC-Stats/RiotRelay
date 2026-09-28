@@ -74,6 +74,12 @@ The easiest way to get started without installing Rust or PostgreSQL locally.
    cargo run
    ```
 
+### Migrating from MariaDB
+Earlier versions stored the cache in MariaDB. To copy the existing `matches` table into PostgreSQL (safe to re-run, never overwrites a more recent row):
+```bash
+MARIADB_URL=mysql://user:password@localhost:3306/riotrelay DATABASE_URL=postgres://user:password@localhost:5432/riotrelay cargo run --release --features migrate --bin migrate_mariadb
+```
+
 ---
 ## 🤝 Contributing
 Interested in helping? Please refer to our [CONTRIBUTING.md](https://github.com/GC-Stats/RiotRelay/blob/main/CONTRIBUTING.md) for guidelines on how to submit pull requests.

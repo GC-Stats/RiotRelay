@@ -20,3 +20,17 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 sqlx = { version = "0.9", features = ["runtime-tokio", "postgres"] }
 sha2 = "0.10"
+
+[features]
+# One-shot MariaDB -> PostgreSQL migration tool (src/bin/migrate_mariadb.rs).
+# Kept optional so the server build doesn't pull in the MySQL driver.
+migrate = ["sqlx/mysql"]
+
+[[bin]]
+name = "riot_relay"
+path = "src/main.rs"
+
+[[bin]]
+name = "migrate_mariadb"
+path = "src/bin/migrate_mariadb.rs"
+required-features = ["migrate"]
