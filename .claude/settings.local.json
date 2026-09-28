@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cargo build *)",
+      "PowerShell(cargo run *)",
+      "PowerShell(cargo audit *)",
+      "WebFetch(domain:crates.io)"
+    ]
+  }
+}

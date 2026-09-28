@@ -25,7 +25,7 @@ License: This project is licensed under the GC-Stats License v1.0 - see the [LIC
 ## 🛠 Tech Stack
 
 - **Webserver:** Axum
-- **Database:** MariaDB 10.11+ (With SQLx)
+- **Database:** PostgreSQL 15+ (With SQLx)
 
 ## 🔌 API
 
@@ -48,7 +48,7 @@ From our research, it's not explicitly forbidden, but it falls in a gray zone (t
 ## ⚙️ Installation
 
 ### Option 1: Docker - Recommended
-The easiest way to get started without installing Rust or MariaDB locally.
+The easiest way to get started without installing Rust or PostgreSQL locally.
 
 1. **Clone the repo:**
    ```bash
@@ -68,7 +68,7 @@ The easiest way to get started without installing Rust or MariaDB locally.
    ```
 
 ### Option 2: Manual Installation (From Source)
-1. **Requirements:** Rust, Cargo & MariaDB
+1. **Requirements:** Rust, Cargo & PostgreSQL
 2. **Commands:**
    ```bash
    cargo run

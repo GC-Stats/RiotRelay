@@ -1,7 +1,7 @@
 // GC-Stats — RiotRelay server
 //
 // Caching relay in front of the Riot Valorant match-v1 API: serves matches
-// from the MariaDB cache when available, fetches and stores them otherwise,
+// from the PostgreSQL cache when available, fetches and stores them otherwise,
 // and exposes a cache-renew endpoint that only evicts the old copy once
 // Riot has answered (Riot deletes matches after ~3 months).
 //
@@ -23,7 +23,7 @@ use axum::{
 };
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use sqlx::mysql::{MySqlPool, MySqlPoolOptions};
+use sqlx::postgres::{PgPool, PgPoolOptions};
 use subtle::ConstantTimeEq;
 
 /// Prefix marking a match as the product of `/merge`: its ID is derived from
@@ -51,7 +51,7 @@ const FORWARDED_HEADERS: &[&str] = &[
 ];
 
 struct AppState {
-    db: MySqlPool,
+    db: PgPool,
     http: reqwest::Client,
     api_key: String,
     auth_key: String,
@@ -65,10 +65,10 @@ async fn main() {
     let auth_key = std::env::var("AUTH_KEY").expect("AUTH_KEY must be set");
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
-    let db = MySqlPoolOptions::new()
+    let db = PgPoolOptions::new()
         .connect(&database_url)
         .await
-        .expect("failed to connect to MariaDB");
+        .expect("failed to connect to PostgreSQL");
 
     sqlx::raw_sql(include_str!("../sql/schema.sql"))
         .execute(&db)
@@ -275,8 +275,8 @@ async fn get_match(
     }
 
     let cached: Option<(String, String)> = match sqlx::query_as(
-        "SELECT body, DATE_FORMAT(fetched_at, '%Y-%m-%dT%H:%i:%sZ')
-         FROM matches WHERE region = ? AND match_id = ?",
+        "SELECT body, to_char(fetched_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"')
+         FROM matches WHERE region = $1 AND match_id = $2",
     )
     .bind(&region)
     .bind(&id)
@@ -344,7 +344,7 @@ async fn renew_match(
     }
 
     let existed: bool = match sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM matches WHERE region = ? AND match_id = ?",
+        "SELECT COUNT(*) FROM matches WHERE region = $1 AND match_id = $2",
     )
     .bind(&region)
     .bind(&id)
@@ -545,11 +545,11 @@ fn compute_merged_id(segments: &[MergeSegment]) -> String {
 
 #[allow(clippy::result_large_err)]
 async fn fetch_cached_body(
-    db: &MySqlPool,
+    db: &PgPool,
     region: &str,
     id: &str,
 ) -> Result<Option<String>, Response> {
-    sqlx::query_scalar::<_, String>("SELECT body FROM matches WHERE region = ? AND match_id = ?")
+    sqlx::query_scalar::<_, String>("SELECT body FROM matches WHERE region = $1 AND match_id = $2")
         .bind(region)
         .bind(id)
         .fetch_optional(db)
@@ -873,10 +873,10 @@ fn bad_gateway_json(msg: &str) -> Response {
     )
 }
 
-async fn store_match(db: &MySqlPool, region: &str, id: &str, body: &str) {
+async fn store_match(db: &PgPool, region: &str, id: &str, body: &str) {
     if let Err(e) = sqlx::query(
-        "INSERT INTO matches (region, match_id, body, fetched_at) VALUES (?, ?, ?, UTC_TIMESTAMP())
-         ON DUPLICATE KEY UPDATE body = VALUES(body), fetched_at = UTC_TIMESTAMP()",
+        "INSERT INTO matches (region, match_id, body, fetched_at) VALUES ($1, $2, $3, now())
+         ON CONFLICT (region, match_id) DO UPDATE SET body = EXCLUDED.body, fetched_at = EXCLUDED.fetched_at",
     )
     .bind(region)
     .bind(id)
