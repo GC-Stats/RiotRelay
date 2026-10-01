@@ -5,9 +5,9 @@
 // and exposes a cache-renew endpoint that only evicts the old copy once
 // Riot has answered (Riot deletes matches after ~3 months).
 //
-// Copyright (c) 2026 Alice Alleman — GC-Stats-RiotRelay
-// License: https://github.com/GC-Stats/RiotRelay/blob/main/LICENSE.md (GC-Stats License v1.0)
-// Repository: https://github.com/GC-Stats/RiotRelay
+// Copyright (c) 2026 Osthelia — RiotRelay
+// License: https://github.com/Osthelia/RiotRelay/blob/main/LICENSE.md (Osthelia License v1.0)
+// Repository: https://github.com/Osthelia/RiotRelay
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;

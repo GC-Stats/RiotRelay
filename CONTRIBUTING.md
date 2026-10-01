@@ -1,6 +1,6 @@
-# Contributing to GC Stats Riot Relay
+# Contributing to Riot Relay
 
-First of all, thank you for considering contributing to the Game Changers Stats project! 
+First of all, thank you for considering contributing to Riot Relay! Osthelia is a community-driven association, and it's through community involvement that we can build a better esport together.
 
 To maintain the quality and integrity of the project, please follow these guidelines.
 
@@ -23,7 +23,13 @@ Before you spend time writing code, **please open a "Feature Request" or "Bug Re
 2. Name your branch clearly: `feature/short-description` or `fix/short-description`.
 3. Follow the installation steps in the `README.md`.
 
-### 3. Submitting a Pull Request
+### 3. Code Standards
+To keep the codebase clean and maintainable:
+- **Formatting & linting:** We use `rustfmt` and Clippy, the same checks as the CI (see below).
+- **Database:** The relay uses PostgreSQL through SQLx. Ensure your changes are compatible with PostgreSQL.
+- **Copyright notice:** Do not remove or alter the Osthelia copyright notice shown by the calling services (see [LICENSE.md](LICENSE.md)).
+
+### 4. Submitting a Pull Request
 
    - Provide a clear description of what the PR changes or adds.
    - Reference the original Issue (e.g., Closes #123).

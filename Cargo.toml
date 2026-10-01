@@ -1,15 +1,17 @@
-# GC-Stats — RiotRelay crate manifest
+# Osthelia — RiotRelay crate manifest
 #
 # Dependencies of the Riot match caching relay (axum, reqwest, sqlx/PostgreSQL).
 #
-# Copyright (c) 2026 Alice Alleman — GC-Stats-RiotRelay
-# License: https://github.com/GC-Stats/RiotRelay/blob/main/LICENSE.md (GC-Stats License v1.0)
-# Repository: https://github.com/GC-Stats/RiotRelay
+# Copyright (c) 2026 Osthelia — RiotRelay
+# License: https://github.com/Osthelia/RiotRelay/blob/main/LICENSE.md (Osthelia License v1.0)
+# Repository: https://github.com/Osthelia/RiotRelay
 
 [package]
 name = "riot_relay"
 version = "1.0.0"
 edition = "2024"
+license-file = "LICENSE.md"
+repository = "https://github.com/Osthelia/RiotRelay"
 
 [dependencies]
 axum = "0.8"

@@ -12,7 +12,7 @@ Because Riot is keeping matchs for only 3 months (Except for the esports clients
 
 |                                                                        Build Status                                                                         |                       Latest Version                                                    |
 |:-----------------------------------------------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|
-| [![CI/CD Pipeline](https://github.com/GC-Stats/RiotRelay/actions/workflows/main.yml/badge.svg)](https://github.com/GC-Stats/RiotRelay/actions/workflows/main.yml) |![GitHub release (latest by date)](https://img.shields.io/github/v/release/GC-Stats/RiotRelay) 
+| [![CI/CD Pipeline](https://github.com/Osthelia/RiotRelay/actions/workflows/main.yml/badge.svg)](https://github.com/Osthelia/RiotRelay/actions/workflows/main.yml) |![GitHub release (latest by date)](https://img.shields.io/github/v/release/Osthelia/RiotRelay) 
 
 ---
 
@@ -20,7 +20,7 @@ Because Riot is keeping matchs for only 3 months (Except for the esports clients
 This repository contains the Rust relay caching Valorant matches from the Riot API.
 
 ## 🤝 License
-License: This project is licensed under the GC-Stats License v1.0 - see the [LICENSE](https://github.com/GC-Stats/RiotRelay/blob/main/LICENSE.md) file for details.
+License: This project is licensed under the Osthelia License v1.0 - see the [LICENSE](https://github.com/Osthelia/RiotRelay/blob/main/LICENSE.md) file for details.
 
 ## 🛠 Tech Stack
 
@@ -52,7 +52,7 @@ The easiest way to get started without installing Rust or PostgreSQL locally.
 
 1. **Clone the repo:**
    ```bash
-   git clone https://github.com/GC-Stats/RiotRelay.git
+   git clone https://github.com/Osthelia/RiotRelay.git
    cd RiotRelay
    ```
 2. **Copy .env**
@@ -82,4 +82,4 @@ MARIADB_URL=mysql://user:password@localhost:3306/riotrelay DATABASE_URL=postgres
 
 ---
 ## 🤝 Contributing
-Interested in helping? Please refer to our [CONTRIBUTING.md](https://github.com/GC-Stats/RiotRelay/blob/main/CONTRIBUTING.md) for guidelines on how to submit pull requests.
+Interested in helping? Please refer to our [CONTRIBUTING.md](https://github.com/Osthelia/RiotRelay/blob/main/CONTRIBUTING.md) for guidelines on how to submit pull requests.

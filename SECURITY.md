@@ -1,44 +1,45 @@
-# Security Policy — GC-Stats
+# Security Policy — Osthelia
 
 ## Supported Versions
 
 Only the latest version of each repository is actively maintained and eligible for security fixes.
 
-| Repository          | Supported |
-|---------------------|-----------|
-| GC-Stats-Website    | ✅ Latest  |
-| GC-Stats-DiscordBot | ✅ Latest  |
-| GC-Stats-API        | ✅ Latest  |
-| GC-Stats-OpenData   | ✅ Latest  |
-| GC-Stats-RiotRelay  | ✅ Latest  |
+| Repository                 | Supported |
+|----------------------------|-----------|
+| Osthelia-Website           | ✅ Latest  |
+| Osthelia-DiscordBot        | ✅ Latest  |
+| DiscordNotificationsWorker | ✅ Latest  |
+| GC-Stats-Website           | ✅ Latest  |
+| GC-Stats-Documentation     | ✅ Latest  |
+| RiotRelay                  | ✅ Latest  |
 
 ---
 
 ## Reporting a Vulnerability
 
-We take security vulnerabilities seriously, especially those involving user data (`discord_id`, `val_id`).
+We take security vulnerabilities seriously, especially those involving the personal data of our members and community (Discord identifiers, Riot identifiers, contact information).
 
 **Please do NOT open a public GitHub issue for security vulnerabilities.**
 
 You can report a vulnerability through either of the following channels:
 
 ### 📧 Email
-Send a detailed report to **[security@gc-stats.app](mailto:security@gc-stats.app)**
+Send a detailed report to **[tech@osthelia.org](mailto:tech@osthelia.org)**
 
 Please include:
 - A clear description of the vulnerability
 - Steps to reproduce the issue
-- The potential impact (data exposure, unauthorized access, etc.)
+- The potential impact (data exposure, unauthorized access, defacement, etc.)
 - Any relevant logs, screenshots, or proof-of-concept code
 
 ### 🔒 GitHub Private Vulnerability Reporting
-Use the **[Report a vulnerability](https://github.com/GC-Stats/.github/security/advisories/new)** button available in the Security tab of the relevant repository.
+Use the **[Report a vulnerability](https://github.com/Osthelia/RiotRelay/security/advisories/new)** button available in the Security tab of the repository.
 
 ---
 
 ## What to Expect
 
-We will acknowledge receipt of your report as soon as possible and keep you informed as we investigate and address the issue. We do not commit to a fixed response deadline, but we are committed to handling reports seriously and transparently.
+Osthelia is a volunteer-run association. We will acknowledge receipt of your report as soon as possible and keep you informed as we investigate and address the issue. We do not commit to a fixed response deadline, but we are committed to handling reports seriously and transparently.
 
 Once a fix is deployed, we will credit you in the Hall of Fame below (unless you prefer to remain anonymous).
 
@@ -64,4 +65,4 @@ We sincerely thank the following researchers for their responsible disclosures:
 
 ---
 
-*GC-Stats Security Policy v1.0 — Alice Alleman — 2026*
+*Osthelia Security Policy v1.0 — Osthelia — 2026*
