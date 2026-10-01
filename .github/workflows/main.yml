@@ -15,18 +15,8 @@ jobs:
       checks: write
     uses: ./.github/workflows/checks.yml
 
-  deploy-preprod:
+  build:
     needs: [run-checks]
-    if: success() && github.event_name == 'push'
-    uses: ./.github/workflows/deploy.yml
-    with:
-      environment: preprod
-      version: ${{ github.sha }}
-    secrets: inherit
-
-  deploy-prod:
-    needs: [run-checks]
-    if: success() && github.event_name == 'release'
     uses: ./.github/workflows/deploy.yml
     with:
       environment: prod

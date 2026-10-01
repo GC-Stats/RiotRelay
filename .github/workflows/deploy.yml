@@ -1,4 +1,4 @@
-name: Deploy
+name: Build & Push
 
 on:
   workflow_call:
@@ -14,9 +14,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
     outputs:
       version: ${{ steps.meta.outputs.version }}
       image-tag: ${{ steps.meta.outputs.image-tag }}
+
     steps:
       - uses: actions/checkout@v6
 
@@ -25,7 +31,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set tags & version
         id: meta
@@ -36,13 +42,14 @@ jobs:
           VERSION="${INPUT_VERSION:-$SHORT_SHA}"
 
           if [ "${{ inputs.environment }}" = "prod" ]; then
-            echo "tags=ghcr.io/gc-stats/riotrelay:latest,ghcr.io/gc-stats/riotrelay:${VERSION}" >> $GITHUB_OUTPUT
-            echo "image-tag=latest" >> $GITHUB_OUTPUT
+            echo "tags=ghcr.io/osthelia/riotrelay:latest,ghcr.io/osthelia/riotrelay:${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "image-tag=latest" >> "$GITHUB_OUTPUT"
           else
-            echo "tags=ghcr.io/gc-stats/riotrelay:preprod" >> $GITHUB_OUTPUT
-            echo "image-tag=preprod" >> $GITHUB_OUTPUT
+            echo "tags=ghcr.io/osthelia/riotrelay:preprod" >> "$GITHUB_OUTPUT"
+            echo "image-tag=preprod" >> "$GITHUB_OUTPUT"
           fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Build & Push
         uses: docker/build-push-action@v7
@@ -52,72 +59,3 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
             RELEASE_VERSION=${{ steps.meta.outputs.version }}
-
-  resolve-servers:
-    runs-on: ubuntu-latest
-    needs: build
-    environment: ${{ inputs.environment }}
-    outputs:
-      primary: ${{ steps.servers.outputs.primary }}
-      rest: ${{ steps.servers.outputs.rest }}
-      hook-id: ${{ steps.servers.outputs.hook-id }}
-    steps:
-      - name: Resolve server list
-        id: servers
-        env:
-          SERVERS: ${{ vars.SERVERS }}
-        run: |
-          if [ -z "$SERVERS" ]; then
-            echo "❌ vars.SERVERS is not set for the '${{ inputs.environment }}' environment"
-            exit 1
-          fi
-
-          IFS=',' read -ra ALL <<< "$SERVERS"
-          PRIMARY="${ALL[0]}"
-          REST=("${ALL[@]:1}")
-          REST_JSON=$(printf '%s\n' "${REST[@]:-}" | jq -R . | jq -sc '[.[] | select(length > 0)]')
-
-          HOOK_ID="gcs-riotrelay"
-
-          echo "primary=$PRIMARY" >> $GITHUB_OUTPUT
-          echo "rest=$REST_JSON" >> $GITHUB_OUTPUT
-          echo "hook-id=$HOOK_ID" >> $GITHUB_OUTPUT
-
-  deploy-primary:
-    runs-on: ubuntu-latest
-    needs: [build, resolve-servers]
-    environment: ${{ inputs.environment }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Deploy to primary server
-        uses: ./.github/actions/deploy-webhook
-        with:
-          server: ${{ needs.resolve-servers.outputs.primary }}
-          hook-id: ${{ needs.resolve-servers.outputs.hook-id }}
-          secret: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
-          image-tag: ${{ needs.build.outputs.image-tag }}
-          version: ${{ needs.build.outputs.version }}
-          verify-health: ${{ inputs.environment == 'prod' }}
-
-  deploy-rest:
-    runs-on: ubuntu-latest
-    needs: [build, resolve-servers, deploy-primary]
-    if: needs.resolve-servers.outputs.rest != '[]'
-    environment: ${{ inputs.environment }}
-    strategy:
-      fail-fast: false
-      matrix:
-        server: ${{ fromJSON(needs.resolve-servers.outputs.rest) }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Deploy to ${{ matrix.server }}
-        uses: ./.github/actions/deploy-webhook
-        with:
-          server: ${{ matrix.server }}
-          hook-id: ${{ needs.resolve-servers.outputs.hook-id }}
-          secret: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
-          image-tag: ${{ needs.build.outputs.image-tag }}
-          version: ${{ needs.build.outputs.version }}
-          verify-health: 'true'
