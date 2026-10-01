@@ -17,6 +17,9 @@ jobs:
 
   build:
     needs: [run-checks]
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/deploy.yml
     with:
       environment: prod
